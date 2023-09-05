@@ -1,0 +1,35 @@
+version: '3'
+services:
+  auto-deploy:
+    container_name: ${__UUID__}
+    image: node:20-alpine
+    volumes:
+    - auto-deploy-${__UUID__}:/app
+    environment:
+    - PORT=9000
+    - GIT_REPO=${__GIT_REPO__}
+    - GIT_BRANCH=${__GIT_BRANCH__}
+    - UUID=${__UUID__}
+    command: >
+      sh -c "
+        cd /app && git clone $GIT_REPO . &&
+        git checkout $GIT_BRANCH &&
+        npm install &&
+        npm run start
+      "
+    ports:
+    - "9000"
+    networks:
+    - auto-deploy
+    restart: unless-stopped
+volumes:
+  auto-deploy-${__UUID__}:
+
+networks:
+  auto-deploy:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.20.0.0/16
+    driver_opts:
+      com.docker.network.bridge.default_gateway: 172.20.0.1

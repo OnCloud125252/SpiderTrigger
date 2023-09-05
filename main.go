@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 )
 
 var port string = "8000"
@@ -20,7 +21,7 @@ type Payload struct {
 }
 
 func main() {
-	http.HandleFunc("/githubwebhook", payloadHandler)
+	http.HandleFunc("/auto-deploy", payloadHandler)
 
 	fmt.Println("Server listening on port " + port + "...")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
@@ -51,6 +52,9 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 		os.Setenv("__GIT_REPO__", payload.Repository.CloneURL)
 		os.Setenv("__GIT_BRANCH__", payload.Repository.DefaultBranch)
 		os.Setenv("__UUID__", UUID)
+
+		exec.Command("docker", "volume", "create", "auto-deploy-"+UUID)
+		exec.Command("docker", "compose", "-f ./node_20-alpine/docker-compose.yml")
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

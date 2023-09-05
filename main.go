@@ -54,7 +54,7 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 		os.Setenv("__UUID__", UUID)
 
 		exec.Command("docker", "volume", "create", "auto-deploy-"+UUID)
-		exec.Command("docker", "compose", "-f ./node_20-alpine/docker-compose.yml")
+		exec.Command("docker-compose", "up")
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

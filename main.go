@@ -3,18 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 var port string = "8000"
 
 type Payload struct {
 	Repository struct {
+		ID            int    `json:"id"`
 		CloneURL      string `json:"clone_url"`
 		DefaultBranch string `json:"default_branch"`
 	} `json:"repository"`
@@ -43,18 +44,24 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var UUID string = uuid.New().String()
+		if payload.Repository.CloneURL == "" {
+			http.Error(w, "Missing CloneURL in payload", http.StatusBadRequest)
+			return
+		}
 
-		fmt.Println("Clone URL:", payload.Repository.CloneURL)
-		fmt.Println("Default Branch:", payload.Repository.DefaultBranch)
-		fmt.Println("UUID:", UUID)
+		if payload.Repository.DefaultBranch == "" {
+			http.Error(w, "Missing DefaultBranch in payload", http.StatusBadRequest)
+			return
+		}
 
-		os.Setenv("__GIT_REPO__", payload.Repository.CloneURL)
-		os.Setenv("__GIT_BRANCH__", payload.Repository.DefaultBranch)
-		os.Setenv("__UUID__", UUID)
-
-		exec.Command("docker", "volume", "create", "auto-deploy-"+UUID)
-		exec.Command("docker-compose", "up")
+		composeUp := exec.Command("./buildDocker.sh", "GIT_REPO="+payload.Repository.CloneURL, "GIT_BRANCH="+payload.Repository.DefaultBranch, "ID="+strconv.Itoa(payload.Repository.ID))
+		composeUp.Stdout = os.Stdout
+		composeUp.Stderr = os.Stderr
+		composeUpError := composeUp.Run()
+		if composeUpError != nil {
+			log.Fatalf("failed to call composeUp.Run(): %v", composeUpError)
+		}
+		return
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

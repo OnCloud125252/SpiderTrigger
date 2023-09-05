@@ -1,27 +1,35 @@
 version: '3'
 services:
   auto-deploy:
-    container_name: ${__UUID__}
+    container_name: ${ID}
     image: node:20-alpine
     volumes:
-    - auto-deploy-${__UUID__}:/app
+      - app-volume:/app
     environment:
-    - PORT=9000
-    - GIT_REPO=${__GIT_REPO__}
-    - GIT_BRANCH=${__GIT_BRANCH__}
-    - UUID=${__UUID__}
+      - PORT=9000
+      - GIT_REPO=${GIT_REPO}
+      - GIT_BRANCH=${GIT_BRANCH}
+      - ID=${ID}
     command: >
       sh -c "
-        cd /app && git clone $GIT_REPO . &&
+        apk add --no-cache git &&
+        cd /app &&
+        rm -rf * .[^.]* &&
+        git clone $GIT_REPO . &&
         git checkout $GIT_BRANCH &&
         npm install &&
         npm run start
       "
     ports:
-    - "9000"
+      - 9000
     networks:
-    - auto-deploy
+      - auto-deploy
     restart: unless-stopped
+
+volumes:
+  app-volume:
+    external: true
+    name: auto-deploy-${ID}
 
 networks:
   auto-deploy:

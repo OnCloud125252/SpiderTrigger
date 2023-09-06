@@ -24,8 +24,9 @@ type Payload struct {
 func main() {
 	http.HandleFunc("/auto-deploy", payloadHandler)
 
-	fmt.Println("Server listening on port " + port + "...")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+	fmt.Println("Server listening on port " + port + " ...")
+	fmt.Println("Auto deploy path: /auto-deploy")
 }
 
 func payloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,14 +55,17 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		composeUp := exec.Command("./buildDocker.sh", "GIT_REPO="+payload.Repository.CloneURL, "GIT_BRANCH="+payload.Repository.DefaultBranch, "ID="+strconv.Itoa(payload.Repository.ID))
+		composeUp := exec.Command("./builder.sh", "GIT_REPO="+payload.Repository.CloneURL, "GIT_BRANCH="+payload.Repository.DefaultBranch, "ID="+strconv.Itoa(payload.Repository.ID))
 		composeUp.Stdout = os.Stdout
 		composeUp.Stderr = os.Stderr
 		composeUpError := composeUp.Run()
 		if composeUpError != nil {
-			log.Fatalf("failed to call composeUp.Run(): %v", composeUpError)
+			fmt.Fprint(w, "Failed to deploy: "+composeUpError.Error())
+			http.Error(w, "Failed to deploy: "+composeUpError.Error(), http.StatusInternalServerError)
+			return
 		}
-		return
+
+		fmt.Fprint(w, "Deployment successful")
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

@@ -24,9 +24,9 @@ type Payload struct {
 func main() {
 	http.HandleFunc("/auto-deploy", payloadHandler)
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
 	fmt.Println("Server listening on port " + port + " ...")
 	fmt.Println("Auto deploy path: /auto-deploy")
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func payloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -55,17 +55,22 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		composeUp := exec.Command("./builder.sh", "GIT_REPO="+payload.Repository.CloneURL, "GIT_BRANCH="+payload.Repository.DefaultBranch, "ID="+strconv.Itoa(payload.Repository.ID))
-		composeUp.Stdout = os.Stdout
-		composeUp.Stderr = os.Stderr
-		composeUpError := composeUp.Run()
-		if composeUpError != nil {
-			fmt.Fprint(w, "Failed to deploy: "+composeUpError.Error())
-			http.Error(w, "Failed to deploy: "+composeUpError.Error(), http.StatusInternalServerError)
-			return
-		}
+		RepoURL := payload.Repository.CloneURL
+		DefaultBranch := payload.Repository.DefaultBranch
+		RepoID := strconv.Itoa(payload.Repository.ID)
+		go func() {
+			composeUp := exec.Command("./builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
+			composeUp.Stdout = os.Stdout
+			composeUp.Stderr = os.Stderr
+			composeUpError := composeUp.Run()
+			if composeUpError != nil {
+				fmt.Println("Deployment failed for "+RepoID+": ", composeUpError)
+			} else {
+				fmt.Println("Deployment for " + RepoID + " successful")
+			}
+		}()
 
-		fmt.Fprint(w, "Deployment successful")
+		fmt.Fprint(w, "Deployment for "+RepoID+" started")
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

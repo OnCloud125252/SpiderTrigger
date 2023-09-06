@@ -6,28 +6,28 @@ for arg in "$@"; do
 done
 
 # Test the environment variables
-echo "GIT_REPO: $GIT_REPO"
-echo "GIT_BRANCH: $GIT_BRANCH"
-echo "ID: $ID"
+echo "Repository URL: $REPO_URL"
+echo "Default Branch: $DEFAULT_BRANCH"
+echo "Repository ID: $REPO_ID"
 
 # Create Dockerfile
-cat << EOF > Dockerfile-$ID
+cat << EOF > Dockerfiles/Dockerfile-$REPO_ID
 FROM node:20-alpine
 WORKDIR /app
 ENV PORT=9000
 RUN apk add --no-cache git
-RUN git clone $GIT_REPO . && \
-    git checkout $GIT_BRANCH && \
+RUN git clone $REPO_URL . && \
+    git checkout $DEFAULT_BRANCH && \
     npm install
 CMD ["npm", "run", "start"]
 EOF
 
 # Check if a volume with the given ID already exists
-# if [[ "$(docker volume ls -q -f name=auto-deploy-$ID)" ]]; then
-#     echo "Volume auto-deploy-$ID already exists."
+# if [[ "$(docker volume ls -q -f name=auto-deploy-$REPO_ID)" ]]; then
+#     echo "Volume auto-deploy-$REPO_ID already exists."
 # else
-#     echo "Volume auto-deploy-$ID does not exists. Creating new one..."
-#     docker volume create auto-deploy-$ID
+#     echo "Volume auto-deploy-$REPO_ID does not exists. Creating new one..."
+#     docker volume create auto-deploy-$REPO_ID
 # fi
 
 # Check if a network interface named auto-deploy already exists
@@ -39,44 +39,18 @@ else
 fi
 
 # Check if a container with the given ID already exists
-if [[ "$(docker ps -a -q -f name=$ID)" ]]; then
-    echo "Container with ID $ID already exists. Updating it..."
+if [[ "$(docker ps -a -q -f name=$REPO_ID)" ]]; then
+    echo "Container with ID $REPO_ID already exists. Updating it..."
     # Stop and remove the existing container
-    docker stop $ID && docker rm $ID
+    docker stop $REPO_ID &>/dev/null && docker rm $REPO_ID &>/dev/null
     # Build docker image and tag it with the ID
-    docker build --no-cache -t $ID -f Dockerfile-$ID .
+    docker build --no-cache -t $REPO_ID -f Dockerfiles/Dockerfile-$REPO_ID .
     # Recreate the container with the new image
-    docker run --name $ID --network auto-deploy --restart unless-stopped -d -p 9000 $ID
+    docker run --name $REPO_ID --network auto-deploy --restart unless-stopped -d -p 9000 $REPO_ID &>/dev/null
 else
-    echo "Container with ID $ID does not exists. Creating new one..."
+    echo "Container with ID $REPO_ID does not exists. Creating new one..."
     # Build docker image and tag it with the ID
-    docker build --no-cache -t $ID -f Dockerfile-$ID .
-    # Create a new docker container and set volume to `auto-deploy-$ID`
-    docker run --name $ID --network auto-deploy --restart unless-stopped -d -p 9000 $ID
+    docker build --no-cache -t $REPO_ID -f Dockerfiles/Dockerfile-$REPO_ID .
+    # Create a new docker container and set volume to `auto-deploy-$REPO_ID`
+    docker run --name $REPO_ID --network auto-deploy --restart unless-stopped -d -p 9000 $REPO_ID &>/dev/null
 fi
-
-
-# /bin/bash
-
-# # Parse the arguments
-# for arg in "$@"; do
-#     export "$arg"
-# done
-
-# # Test the environment variables
-# echo "GIT_REPO: $GIT_REPO"
-# echo "GIT_BRANCH: $GIT_BRANCH"
-# echo "ID: $ID"
-
-# # docker volume create auto-deploy-$ID
-# # docker-compose -f docker-compose/node_20-alpine.yml up --no-recreate
-
-# # Check if a container with the given ID already exists
-# if [[ "$(docker ps -a -q -f name=$ID)" ]]; then
-#     echo "Container with ID $ID already exists. Updating it..."
-#     docker-compose -f docker-compose/node_20-alpine.yml up -d --no-deps --build $ID
-# else
-#     echo "Container with ID $ID does not exists. Creating new one..."
-#     docker volume create auto-deploy-$ID
-#     docker-compose -f docker-compose/node_20-alpine.yml up -d --no-recreate
-# fi

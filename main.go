@@ -13,6 +13,7 @@ import (
 )
 
 var port string = "8000"
+var path string = "/auto-deploy"
 
 type Payload struct {
 	Repository struct {
@@ -23,10 +24,10 @@ type Payload struct {
 }
 
 func main() {
-	http.HandleFunc("/auto-deploy", payloadHandler)
+	http.HandleFunc(path, payloadHandler)
 
 	fmt.Println("Server listening on port " + port + " ...")
-	fmt.Println("Auto deploy path: /auto-deploy")
+	fmt.Println("Auto deploy path: " + path)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
@@ -60,6 +61,7 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 		DefaultBranch := payload.Repository.DefaultBranch
 		RepoID := strconv.Itoa(payload.Repository.ID)
 
+		// Execute build process in a goroutine
 		go func() {
 			buildContainer := exec.Command("./builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
 
@@ -68,10 +70,12 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 				panic(buildContainerError)
 			}
 			defer logFile.Close()
+
 			buildContainer.Stdout = &cleanupWriter{writer: logFile}
 			buildContainer.Stderr = &cleanupWriter{writer: logFile}
 			buildContainerError = buildContainer.Start()
 			buildContainer.Wait()
+
 			if buildContainerError != nil {
 				fmt.Println("Deployment failed for "+RepoID+": ", buildContainerError)
 			} else {
@@ -86,10 +90,12 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// cleanupWriter is a custom writer that strips ANSI escape codes before writing to a file
 type cleanupWriter struct {
 	writer *os.File
 }
 
+// Write writes the cleaned output to the file
 func (w *cleanupWriter) Write(p []byte) (n int, err error) {
 	cleanOutput := stripansi.Strip(string(p))
 	_, err = w.writer.WriteString(cleanOutput)

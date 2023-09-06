@@ -34,14 +34,14 @@ fi
 # Check if a container with the given ID already exists
 if [[ "$(docker ps -a -q -f name=$REPO_ID)" ]]; then
     echo "Container with ID $REPO_ID already exists. Updating it..."
-
+    
     docker stop $REPO_ID &>/dev/null && docker rm $REPO_ID &>/dev/null
-
+    
     docker build --no-cache -t $REPO_ID -f Dockerfiles/Dockerfile-$REPO_ID .
     docker run --name $REPO_ID --network auto-deploy --restart unless-stopped -d -p 9000 $REPO_ID &>/dev/null
 else
     echo "Container with ID $REPO_ID does not exists. Creating new one..."
-
+    
     docker build --no-cache -t $REPO_ID -f Dockerfiles/Dockerfile-$REPO_ID .
     docker run --name $REPO_ID --network auto-deploy --restart unless-stopped -d -p 9000 $REPO_ID &>/dev/null
 fi

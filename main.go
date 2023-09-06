@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/acarl005/stripansi"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,9 +12,6 @@ import (
 	"os/exec"
 	"strconv"
 )
-
-var port string = "8000"
-var path string = "/auto-deploy"
 
 type Payload struct {
 	Repository struct {
@@ -23,7 +21,31 @@ type Payload struct {
 	} `json:"repository"`
 }
 
+var defaultPort = "8000"
+var defaultPath = "/auto-deploy"
+
 func main() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("No config file found. Using default values.")
+	} else {
+		fmt.Println("Config file found. Using user defined values.")
+	}
+
+	port := viper.GetString("port")
+	if port == "" {
+		port = defaultPort
+	}
+
+	path := viper.GetString("path")
+	if path == "" {
+		path = defaultPath
+	}
+
 	http.HandleFunc(path, payloadHandler)
 
 	fmt.Println("Server listening on port " + port + " ...")
@@ -63,7 +85,7 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Execute build process in a goroutine
 		go func() {
-			buildContainer := exec.Command("./builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
+			buildContainer := exec.Command("./docker_builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
 
 			logFile, buildContainerError := os.Create("./logs/log-" + RepoID + ".log")
 			if buildContainerError != nil {

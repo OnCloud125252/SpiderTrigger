@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/acarl005/stripansi"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -58,13 +59,21 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 		RepoURL := payload.Repository.CloneURL
 		DefaultBranch := payload.Repository.DefaultBranch
 		RepoID := strconv.Itoa(payload.Repository.ID)
+
 		go func() {
-			composeUp := exec.Command("./builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
-			composeUp.Stdout = os.Stdout
-			composeUp.Stderr = os.Stderr
-			composeUpError := composeUp.Run()
-			if composeUpError != nil {
-				fmt.Println("Deployment failed for "+RepoID+": ", composeUpError)
+			buildContainer := exec.Command("./builder.sh", "REPO_URL="+RepoURL, "DEFAULT_BRANCH="+DefaultBranch, "REPO_ID="+RepoID)
+
+			logFile, buildContainerError := os.Create("./logs/log-" + RepoID + ".log")
+			if buildContainerError != nil {
+				panic(buildContainerError)
+			}
+			defer logFile.Close()
+			buildContainer.Stdout = &cleanupWriter{writer: logFile}
+			buildContainer.Stderr = &cleanupWriter{writer: logFile}
+			buildContainerError = buildContainer.Start()
+			buildContainer.Wait()
+			if buildContainerError != nil {
+				fmt.Println("Deployment failed for "+RepoID+": ", buildContainerError)
 			} else {
 				fmt.Println("Deployment for " + RepoID + " successful")
 			}
@@ -75,4 +84,14 @@ func payloadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+type cleanupWriter struct {
+	writer *os.File
+}
+
+func (w *cleanupWriter) Write(p []byte) (n int, err error) {
+	cleanOutput := stripansi.Strip(string(p))
+	_, err = w.writer.WriteString(cleanOutput)
+	return len(p), err
 }

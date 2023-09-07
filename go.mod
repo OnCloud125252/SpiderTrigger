@@ -1,4 +1,4 @@
-module Autodeploy
+module SpiderTrigger
 
 go 1.21.0
 

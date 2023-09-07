@@ -191,6 +191,6 @@ You may now navigate to the [Finishing](#finishing) part to complete the deploym
 Congratulations! You have successfully deployed SpiderTrigger on your own server. SpiderTrigger will now listen for webhook requests and automatically perform the deployment process whenever changes are pushed to your configured path.
 
 > [!IMPORTANT]\
-> 1. SpiderTrigger only exposes one port inside the Docker container (default 9000) to a random port on the host. You can check which port on the host is mapped to the container using the `docker ps` command.  
-> 2. SpiderTrigger automatically injects an environment variable to the Docker container: `PORT=9000`. If your application needs to use a port, you can directly use the `PORT` environment variable.  
-> 3. Once you have the webhook link, you can use the same webhook for many projects. SpiderTrigger will handle them separately on different containers.
+> - SpiderTrigger only exposes one port inside the Docker container (default 9000) to a random port on the host. You can check which port on the host is mapped to the container using the `docker ps` command.\
+> - SpiderTrigger automatically injects an environment variable to the Docker container: `PORT=9000`. If your application needs to use a port, you can directly use the `PORT` environment variable.\
+> - Once you have the webhook link, you can use the same webhook for many projects. SpiderTrigger will handle them separately on different containers.

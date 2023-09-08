@@ -82,7 +82,7 @@ cat << EOF > $PWD/_production/run_in_background.sh
 #!/bin/bash
 nohup $PWD/_production/SpiderTrigger > $PWD/_production/nohup.log 2>&1 &
 echo \$! > $PWD/_production/nohup_pid
-echo -e "${GREEN}${CHECKMARK} SpiderTrigger started up successfully!${NC}"
+echo -e "${GREEN}${CHECKMARK} SpiderTrigger started up in background successfully!${NC}"
 EOF
 chmod +x $PWD/_production/run_in_background.sh
 

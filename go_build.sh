@@ -83,6 +83,7 @@ cat << EOF > _production/run_in_background.sh
 nohup ./SpiderTrigger &
 echo \$! > nohup_pid
 EOF
+chmod +x ./_production/run_in_background.sh
 
 # Create kill file
 cat << EOF > _production/kill_run_in_background.sh
@@ -101,6 +102,7 @@ else
     echo "nohup_pid file not found."
 fi
 EOF
+chmod +x ./_production/kill_run_in_background.sh
 
 echo ""
 echo -e "${GREEN}All operations completed successfully!${NC}"

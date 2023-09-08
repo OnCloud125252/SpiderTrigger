@@ -26,16 +26,16 @@ else
 fi
 
 # Clean up build folder if it exists
-if [ -d "_production" ]; then
-    rm -rf "_production"
+if [ -d "$PWD/_production" ]; then
+    rm -rf "$PWD/_production"
 fi
-mkdir -p "_production"
+mkdir -p "$PWD/_production"
 
 # Build program to production folder
-go build -o "_production"
+go build -o "$PWD/_production"
 
 # Get the executable file name
-executable=$(basename "_production"/*)
+executable=$(basename "$PWD/_production"/*)
 echo ""
 echo -e "${GREEN}Build success!${NC}"
 
@@ -45,7 +45,7 @@ if [ $# -gt 0 ]; then
     echo -e "${MAGENTA}Copying dependencies...${NC}"
     for arg in "$@"; do
         if [ -e "$arg" ]; then
-            cp -r "$arg" "_production/"
+            cp -r "$arg" "$PWD/_production/"
             echo -e "  ${MAGENTA}${CHECKMARK} $arg${NC}"
         else
             echo -e "  ${RED}${CROSSMARK} File or directory not found: $arg${NC}"
@@ -57,52 +57,53 @@ fi
 
 # Check and create necessary dependencies
 echo ""
-if [ ! -f "_production/$docker_builder" ] || [ ! -d "_production/Dockerfiles" ] || [ ! -d "_production/logs" ]; then
+if [ ! -f "$PWD/_production/$docker_builder" ] || [ ! -d "$PWD/_production/Dockerfiles" ] || [ ! -d "$PWD/_production/logs" ]; then
     echo -e "${MAGENTA}Creating necessary dependencies...${NC}"
 fi
-if [ ! -f "_production/$docker_builder" ]; then
-    cp "$docker_builder" "_production/"
+if [ ! -f "$PWD/_production/$docker_builder" ]; then
+    cp "$docker_builder" "$PWD/_production/"
     echo -e "  ${MAGENTA}${CHECKMARK} $docker_builder${NC}"
 fi
-if [ ! -d "_production/Dockerfiles" ]; then
-    mkdir -p "_production/Dockerfiles"
+if [ ! -d "$PWD/_production/Dockerfiles" ]; then
+    mkdir -p "$PWD/_production/Dockerfiles"
     echo -e "  ${MAGENTA}${CHECKMARK} Dockerfiles${NC}"
 fi
-if [ ! -d "_production/logs" ]; then
-    mkdir -p "_production/logs"
+if [ ! -d "$PWD/_production/logs" ]; then
+    mkdir -p "$PWD/_production/logs"
     echo -e "  ${MAGENTA}${CHECKMARK} logs${NC}"
 fi
 
 # Gain the execute permission
-chmod +x ./_production/$executable
-chmod +x ./_production/$docker_builder
+chmod +x $PWD/_production/$executable
+chmod +x $PWD/_production/$docker_builder
 
 # Create run file
-cat << EOF > _production/run_in_background.sh
+cat << EOF > $PWD/_production/run_in_background.sh
 #!/bin/bash
-nohup ./SpiderTrigger &
-echo \$! > nohup_pid
+nohup $PWD/_production/SpiderTrigger > $PWD/_production/nohup.log 2>&1 &
+echo \$! > $PWD/_production/nohup_pid
+echo -e "${GREEN}${CHECKMARK} SpiderTrigger started up successfully!${NC}"
 EOF
-chmod +x ./_production/run_in_background.sh
+chmod +x $PWD/_production/run_in_background.sh
 
 # Create kill file
-cat << EOF > _production/kill_run_in_background.sh
+cat << EOF > $PWD/_production/kill_run_in_background.sh
 #!/bin/bash
-if [ -f "nohup_pid" ]; then
-    pid=\$(cat nohup_pid)
+if [ -f "$PWD/_production/nohup_pid" ]; then
+    pid=\$(cat $PWD/_production/nohup_pid)
     if [ -n "\$pid" ]; then
-        echo "Killing process \$pid..."
+        echo -e "${MAGENTA}Killing process \$pid ...${NC}"
         kill \$pid
-        rm nohup_pid
-        echo "Process killed."
+        rm $PWD/_production/nohup_pid
+        echo -e "${GREEN}${CHECKMARK} Process killed.${NC}"
     else
-        echo "No process ID found in nohup_pid file."
+        echo -e "${RED}${CROSSMARK} No process ID found in nohup_pid file.${NC}"
     fi
 else
-    echo "nohup_pid file not found."
+    echo -e "${RED}${CROSSMARK} nohup_pid file not found.${NC}"
 fi
 EOF
-chmod +x ./_production/kill_run_in_background.sh
+chmod +x $PWD/_production/kill_run_in_background.sh
 
 echo ""
 echo -e "${GREEN}All operations completed successfully!${NC}"

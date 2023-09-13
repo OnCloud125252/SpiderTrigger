@@ -37,21 +37,38 @@ Before deploying SpiderTrigger on your own server, make sure you have the follow
 
 To install Go, follow these steps:
 
-1. Download the latest version of Go from the official website. For example, you can download Go 1.21.1 from [this link](https://go.dev/dl/go1.21.1.linux-amd64.tar.gz).
+1. Download the latest version of Go from the official website. For example, you can download Go 1.21.1 using the following command:
 
-2. Remove any previous Go installation by deleting the `/usr/local/go` folder (if it exists).
-
-3. Extract the downloaded archive into `/usr/local`, creating a fresh Go tree. Run the following command (you may need to run it as root or through sudo):
+   *Using wget*
    ```bash
-   rm -rf /usr/local/go && tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+   wget https://go.dev/dl/go1.21.1.linux-amd64.tar.gz
+   ```
+   *Using curl*
+   ```bash
+   curl -o go1.21.1.linux-amd64.tar.gz https://go.dev/dl/go1.21.1.linux-amd64.tar.gz
    ```
 
-4. Add `/usr/local/go/bin` to the `PATH` environment variable. You can do this by adding the following line to your `$HOME/.profile` or `/etc/profile` (for a system-wide installation):
+3. Remove any previous Go installation by deleting the `/usr/local/go` folder (if it exists):
    ```bash
-   export PATH=$PATH:/usr/local/go/bin
+   sudo rm -rf /usr/local/go
    ```
 
-5. Verify that you've installed Go by opening a command prompt and typing the following command:
+5. Extract the downloaded archive into `/usr/local`, creating a fresh Go tree. Run the following command (you may need to run it as root or through sudo):
+   ```bash
+   sudo tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz
+   ```
+
+6. Add `/usr/local/go/bin` to the `PATH` environment variable. You can do this by adding the following line to your `$HOME/.profile` or `/etc/profile` (for a system-wide installation):
+   ```bash
+   echo '\n# Golang\nexport PATH=$PATH:/usr/local/go/bin' >> $HOME/.profile
+   ```
+
+7. Load the updated profile by running the following command:
+   ```bash
+   source $HOME/.profile
+   ```
+
+8. Verify that you've installed Go by opening a command prompt and typing the following command:
    ```bash
    go version
    ```

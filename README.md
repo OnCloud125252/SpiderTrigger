@@ -30,10 +30,46 @@ The workflow of SpiderTrigger is as follows:
 
 Before deploying SpiderTrigger on your own server, make sure you have the following prerequisites installed:
 
-- Go version 1.21.0 or later
 - Docker
 
-### Installing Go
+If you're building SpiderTrigger from source, make sure you have the following prerequisites installed as well:
+
+- Go version 1.21.0 or later
+
+<details>
+   <summary>Installing Docker</summary>
+
+To install Docker, follow these steps:
+
+1. Install Docker using the package manager for your operating system. For example, on Ubuntu, you can use the following command:
+   ```bash
+   sudo apt install docker.io
+   ```
+
+2. Fix the permission error by performing the following steps:
+   1. Create the `docker` group on the system:
+      ```bash
+      sudo groupadd -f docker
+      ```
+   2. Add the active user to the `docker` group:
+      ```bash
+      sudo usermod -aG docker $USER
+      ```
+   3. Apply the group changes to the current terminal session:
+      ```bash
+      newgrp docker
+      ```
+   4. Check if the `docker` group is in the list of user groups:
+      ```bash
+      groups
+      ```
+
+For more information, please refer to this [Installing Portainer with Docker and Configuring MTU.md](https://gist.github.com/OnCloud125252/2346b1a03ce9d7fd378bfa26b083799f).
+
+</details>
+
+<details>
+   <summary>Installing Go</summary>
 
 To install Go, follow these steps:
 
@@ -76,34 +112,7 @@ To install Go, follow these steps:
 
 For more information, please refer to the [official Go installation documentation](https://go.dev/doc/install).
 
-### Installing Docker
-
-To install Docker, follow these steps:
-
-1. Install Docker using the package manager for your operating system. For example, on Ubuntu, you can use the following command:
-   ```bash
-   sudo apt install docker.io
-   ```
-
-2. Fix the permission error by performing the following steps:
-   1. Create the `docker` group on the system:
-      ```bash
-      sudo groupadd -f docker
-      ```
-   2. Add the active user to the `docker` group:
-      ```bash
-      sudo usermod -aG docker $USER
-      ```
-   3. Apply the group changes to the current terminal session:
-      ```bash
-      newgrp docker
-      ```
-   4. Check if the `docker` group is in the list of user groups:
-      ```bash
-      groups
-      ```
-
-For more information, please refer to this [Installing Portainer with Docker and Configuring MTU.md](https://gist.github.com/OnCloud125252/2346b1a03ce9d7fd378bfa26b083799f).
+</details>
 
 ## Deploying SpiderTrigger
 
